@@ -42,6 +42,19 @@ public class Usuaria implements Serializable {
 	public Usuaria() {
 	}
 
+	public Usuaria(int id, Date fechaElim, Date fechaNac, byte[] img, String nombre, String pass, String username,
+			UsuarioTipo usuarioTipo) {
+		super();
+		this.id = id;
+		this.fechaElim = fechaElim;
+		this.fechaNac = fechaNac;
+		this.img = img;
+		this.nombre = nombre;
+		this.pass = pass;
+		this.username = username;
+		this.usuarioTipo = usuarioTipo;
+	}
+
 	public int getId() {
 		return this.id;
 	}
