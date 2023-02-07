@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +44,17 @@ public class UsuariaController {
 			usuarios.add(dto);
 		}
 		return usuarios;
+	}
+
+	@GetMapping("/obtener/{id}")
+	public DTO getUsuario(@PathVariable("id") int id) {
+		Usuaria u = usuRep.findById(id);
+		DTO dto = new DTO();
+		dto.put("nombre", u.getNombre());
+		dto.put("fecha_nac", u.getFechaNac().toString());
+		dto.put("pass", u.getPass());
+		dto.put("username", u.getUsername());
+		return dto;
 	}
 
 	@PostMapping(path = "/crear", consumes = MediaType.APPLICATION_JSON_VALUE)
