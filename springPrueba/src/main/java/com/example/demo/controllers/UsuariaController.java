@@ -68,14 +68,14 @@ public class UsuariaController {
 			dto.put("pass", u.getPass());
 			dto.put("username", u.getUsername());
 		} else {
-			dto.put("error", "not found");
+			dto.put("error", "not-found");
 		}
 		return dto;
 	}
 
 	@PostMapping(path = "/crear", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public void cambiaUsuario(@RequestBody DatosAltaUsuario u, HttpServletRequest request) {
-		usuRep.save(new Usuaria(u.id, null, u.fechaNac, DatatypeConverter.parseBase64Binary(u.img), u.nombre, u.pass,
+		usuRep.save(new Usuaria(u.id, u.fechaElim, u.fechaNac, DatatypeConverter.parseBase64Binary(u.img), u.nombre, u.pass,
 				u.username, usuTipo.findById(u.rol)));
 	}
 
@@ -95,7 +95,7 @@ public class UsuariaController {
 			super();
 			this.id = id;
 			this.fechaElim = fechaElim;
-			this.fechaNac = fechaElim;
+			this.fechaNac = fechaNac;
 			this.img = img;
 			this.nombre = nombre;
 			this.username = username;
@@ -114,8 +114,7 @@ public class UsuariaController {
 
 	@DeleteMapping("/usuario/{id}")
 	public void borrarUsuario(@PathVariable("id") int id) {
-		Usuaria u = usuRep.findById(id);
-		if (u != null) {
+		if (usuRep.findById(id) != null) {
 			usuRep.deleteById(id);
 		}
 	}
