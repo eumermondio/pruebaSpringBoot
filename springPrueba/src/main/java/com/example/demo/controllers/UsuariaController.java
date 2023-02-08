@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.DatatypeConverter;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Usuaria;
+import com.example.demo.jwtSecurity.AutenticadorJWT;
 import com.example.demo.repositorio.TipoUsuarioRepositorio;
 import com.example.demo.repositorio.UsuariaRepositorio;
 
@@ -75,8 +77,8 @@ public class UsuariaController {
 
 	@PostMapping(path = "/crear", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public void cambiaUsuario(@RequestBody DatosAltaUsuario u, HttpServletRequest request) {
-		usuRep.save(new Usuaria(u.id, u.fechaElim, u.fechaNac, DatatypeConverter.parseBase64Binary(u.img), u.nombre, u.pass,
-				u.username, usuTipo.findById(u.rol)));
+		usuRep.save(new Usuaria(u.id, u.fechaElim, u.fechaNac, DatatypeConverter.parseBase64Binary(u.img), u.nombre,
+				u.pass, u.username, usuTipo.findById(u.rol)));
 	}
 
 	static class DatosAltaUsuario {
@@ -117,6 +119,47 @@ public class UsuariaController {
 		if (usuRep.findById(id) != null) {
 			usuRep.deleteById(id);
 		}
+	}
+
+	////////// Controlador de autenticacion //////////
+	@PostMapping(path = "/autentica", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public DTO autentitcaUsuario(@RequestBody DatosAutenticacionUsuario datos, HttpServletRequest request,
+			HttpServletResponse response) {
+
+		DTO dto = new DTO();
+		dto.put("result", "fail");
+
+		Usuaria usuAutenticado = usuRep.findByUsernameAndPass(datos.username, datos.pass);
+
+		// si existe el usuario y los datos son correctos, devolveremos un success y
+		// todos los datos del usuario
+		if (usuAutenticado != null) {
+			dto.put("result", "success");
+
+			// devolvemos jwt que usaremos de ahora en adelante en las cabeceras para
+			// identificar al usuario
+			dto.put("jwt", AutenticadorJWT.codificaJWT(usuAutenticado));
+
+			// Prueba cookie. Quita el request y el response
+			Cookie cook = new Cookie("jwt", AutenticadorJWT.codificaJWT(usuAutenticado));
+			cook.setMaxAge(-1);
+			response.addCookie(cook);
+			//
+		}
+
+		return dto;
+	}
+
+	static class DatosAutenticacionUsuario {
+		String username;
+		String pass;
+
+		public DatosAutenticacionUsuario(String username, String pass) {
+			super();
+			this.username = username;
+			this.pass = pass;
+		}
+
 	}
 
 }
