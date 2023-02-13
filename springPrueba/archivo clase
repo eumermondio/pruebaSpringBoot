@@ -1,0 +1,398 @@
+spring.datasource.url=jdbc:mysql://localhost:3306/nuevo?serverTimezone=Europe/Madrid
+spring.datasource.username=alex
+spring.datasource.password=1234
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=update
+
+
+
+1Âº Genero el proyecto en https://start.spring.io/
+2Âº AÃ±ado dependencias web, mysql, jpa
+3Âº Descargo el proyecto,lo descomprimo y lo pego en eclipse-workspace
+
+
+Repositorio del clase Usuaria
+
+//Inicio
+import java.io.Serializable;
+import java.util.List;
+
+import javax.transaction.Transactional;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.nuevo3.entidades.Usuaria;
+
+
+
+
+
+
+@Repository
+public interface UsuariaRepositorio extends JpaRepository<Usuaria, Serializable>{
+	
+	@Bean
+	public abstract List<Usuaria> findAll();
+	public abstract Usuaria findById(int id);
+	public abstract List<Usuaria> findByNombre(String userName);
+	public abstract Usuaria findByUsernameAndPass(String userName, String pass);
+	@Transactional
+	public abstract void deleteById(int id);
+	
+
+	@Transactional
+	public abstract Usuaria save(Usuaria id);
+	
+	
+
+}
+//fin repositorio
+
+
+Repositorio clase TipoUsuario
+//inicio
+import java.io.Serializable;
+import java.util.List;
+
+import javax.transaction.Transactional;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.nuevo3.entidades.Usuaria;
+import com.example.nuevo3.entidades.UsuarioTipo;
+
+
+
+@Repository
+
+public interface TipoUsuarioRepositorio extends JpaRepository<UsuarioTipo, Serializable>{
+	@Bean
+	public abstract List<UsuarioTipo> findAll();
+	public abstract UsuarioTipo findById(int id);
+
+	
+	@Transactional
+	public abstract void deleteById(int id);
+	
+	@Transactional
+	public abstract Usuaria save(Usuaria tu);
+	
+	
+
+}
+//fin repositorio TipoUsuario
+
+
+
+//Controlador Usuaria
+
+
+
+package com.example.nuevo4.controladores;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+
+import com.example.nuevo4.entidades.Usuaria;
+import com.example.nuevo4.repositorios.TipoUsuarioRepositorio;
+import com.example.nuevo4.repositorios.UsuariaRepositorio;
+
+@CrossOrigin
+@RestController
+@RequestMapping("/usuaria")
+public class Usuariacontrolador {
+	
+	@Autowired
+	UsuariaRepositorio usuRep;
+	@Autowired
+	TipoUsuarioRepositorio usuTipo;
+	
+	@GetMapping("/obtener")
+	public List<DTO> getUsuarios() {
+		//Creo una lista de hashmap para devolver un json
+		List<DTO> listaUsuariosDto = new ArrayList<DTO>();
+		//leo de repositorio todos los registros
+		List<Usuaria> usuarios = usuRep.findAll();
+		//Los voy cargar en el DTO
+		
+		for(Usuaria u : usuarios) {				
+			DTO dtoUsuaria=new DTO();
+			
+			dtoUsuaria.put("nombre",u.getNombre());
+			dtoUsuaria.put("fecha_nac",u.getFechaNac().toString());
+			if(u.getFechaElim()!=null) 
+			dtoUsuaria.put("fecha_elim",u.getFechaElim().toString());
+			else
+			dtoUsuaria.put("fecha_elim",new Date(0));		
+			
+			listaUsuariosDto.add(dtoUsuaria);
+		}
+		
+	
+		return listaUsuariosDto;}
+	
+	
+
+	
+	
+}
+//fin controller usuaria
+
+//Clase DTO
+
+
+package com.example.nuevo4.controladores;
+
+import java.util.HashMap;
+
+@SuppressWarnings("serial")
+public class DTO extends HashMap<String, Object> {
+
+	public DTO() {
+		super();
+	}
+} //fin clase DTO
+
+
+
+//Controlador para aÃ±adir un registro nuevo
+
+
+	@PostMapping(path="/anadirnuevo",consumes=MediaType.APPLICATION_JSON_VALUE)
+	public void autenticaUsuario(@RequestBody
+	DatosAltaUsuario u,HttpServletRequest request) {
+		usuRep.save(new Usuaria(
+		u.id,null,u.fechaNac,
+		//u.img
+		DatatypeConverter.parseBase64Binary(u.img),
+		//
+		u.nombre,
+		u.pass,u.username, usuTipo.findById(u.rol)));
+	  }	
+
+
+	  
+	  	static class DatosAltaUsuario{
+		int id;
+		Date fechaElim;
+		Date fechaNac;
+		String img;
+		//private byte[] img;
+		String nombre;
+		String username;
+		String pass;
+		int rol;
+		
+	public DatosAltaUsuario(int id, Date fechaElim,Date fechaNac,
+		 String img, String nombre,String username,String pass,int rol) {
+		super();
+		this.id = id;
+		this.fechaElim = fechaElim;
+		this.fechaNac = fechaElim;
+		this.img=img;
+		this.nombre=nombre;
+		this.username=username;
+		this.pass=pass;
+		this.rol=rol;
+	}}
+
+//fin controlador aÃ±adir registro
+
+//JSON con registro nuevo
+
+{ "id":"34",
+"fechaElim":"2002-12-12",
+"fechaNac":"2002-12-12",
+	"img":"dfasdf",
+	"nombre":"juanita",
+	"username":"juani",
+	 "pass":"jj",
+    "rol":"1"
+
+}
+//
+
+
+
+//Obtener un registron con findById
+
+	@PostMapping(path="/obtener1",consumes=MediaType.APPLICATION_JSON_VALUE)
+	public DTO getUsuarios(@RequestBody DTO solouno) {
+		//Creo una lista de hashmap para devolver un json
+		
+		//leo de repositorio todos los registros
+		Usuaria u = usuRep.findById(Integer.parseInt(solouno.get("id").toString()));
+		//Los voy cargar en el DTO
+		
+					
+			DTO dtoUsuaria=new DTO();
+			if(u!=null) {
+			dtoUsuaria.put("nombre",u.getNombre());
+			dtoUsuaria.put("fecha_nac",u.getFechaNac().toString());
+			if(u.getFechaElim()!=null) 
+			dtoUsuaria.put("fecha_elim",u.getFechaElim().toString());
+			else
+			dtoUsuaria.put("fecha_elim",new Date(0));		
+			dtoUsuaria.put("nombre", u.getNombre());
+			
+			}else dtoUsuaria.put("result","fail");
+	
+		return dtoUsuaria;}	
+//fin Obtener un registron con findById
+
+//Borra un registro de la base de datos
+
+	@PostMapping(path="/borrar",consumes=MediaType.APPLICATION_JSON_VALUE)
+	public DTO borrarUsuario(@RequestBody DTO solouno) {
+		//Creo una lista de hashmap para devolver un json
+		
+		//leo de repositorio todos los registros
+		Usuaria u = usuRep.findById(Integer.parseInt(solouno.get("id").toString()));
+		//Los voy cargar en el DTO
+		
+					
+			DTO dtoUsuaria=new DTO();
+
+			if(u!=null) {usuRep.delete(u);
+			dtoUsuaria.put("delete","ok");
+			}
+			else dtoUsuaria.put("delete","fail");
+	
+		return dtoUsuaria;}
+	
+// Fin Borra un registro de la base de datos
+
+
+//Dependencia jwt
+
+<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt</artifactId>
+    <version>0.9.1</version>
+</dependency>
+
+//
+
+
+// Controlador que autentica un usuario
+
+
+
+	@PostMapping(path = "/autentica", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public DTO autentitcaUsuario(@RequestBody DatosAutenticacionUsuario datos, HttpServletRequest request,
+			HttpServletResponse response) {
+
+		DTO dto = new DTO();
+		dto.put("result", "fail");
+
+		Usuaria usuAutenticado = usuRep.findByUsernameAndPass(datos.username, datos.pass);
+
+		// si existe el usuario y los datos son correctos, devolveremos un success y
+		// todos los datos del usuario
+		if (usuAutenticado != null) {
+			dto.put("result", "success");
+
+			// devolvemos jwt que usaremos de ahora en adelante en las cabeceras para
+			// identificar al usuario
+			dto.put("jwt", AutenticadorJWT.codificaJWT(usuAutenticado));
+
+			// Prueba cookie. Quita el request y el response
+			Cookie cook = new Cookie("jwt", AutenticadorJWT.codificaJWT(usuAutenticado));
+			cook.setMaxAge(-1);
+			response.addCookie(cook);
+			//
+		}
+
+		return dto;
+	}
+	
+	
+	
+	static class DatosAutenticacionUsuario {
+		String username;
+		String pass;
+
+		public DatosAutenticacionUsuario(String username, String pass) {
+			super();
+			this.username = username;
+			this.pass = pass;
+		}
+
+	}
+	
+	//fin autenticador
+	
+	
+	
+//Controlador devuevle el usuario autenticado
+
+
+	
+	@GetMapping("/quieneres")
+	public DTO getAutenticado(HttpServletRequest request) {
+		DTO dtoUsuaria = new DTO();
+		Cookie[] c = request.getCookies();
+		dtoUsuaria.put("result", "fail");
+		int idUsuarioAutenticado = -1;
+		for (Cookie co : c) {
+		if (co.getName().equals("jwt"))
+				// dtoUsuaria.put("id",
+       idUsuarioAutenticado = AutenticadorJWT.getIdUsuarioDesdeJWT(co.getValue());
+		}
+		// identificamos usuario por jwt de cabecera recibida
+
+		// int idUsuarioAutenticado =
+		// AutenticadorJWT.getIdUsuarioDesdeJwtIncrustadoEnRequest(request);
+
+		Usuaria u = usuRep.findById(idUsuarioAutenticado);
+		// dtoUsuaria.put("idfound", idUsuarioAutenticado);
+		// si existe el usuario y los datos son correctos, devolveremos un success y
+		// todos los datos del usuario
+		if (u != null) {
+			dtoUsuaria.put("result", "ok");
+			dtoUsuaria.put("nombre", u.getNombre());
+			dtoUsuaria.put("fecha_nac", u.getFechaNac().toString());
+			if (u.getFechaElim() != null)
+				dtoUsuaria.put("fecha_elim", u.getFechaElim().toString());
+			else
+				dtoUsuaria.put("fecha_elim", new Date(0));
+			dtoUsuaria.put("rol", u.getUsuarioTipo().getRol());
+		}
+
+		return dtoUsuaria;
+	}
+	
+	//fin quiereres
+	
+//Tablas nuevas a la base de datos
+
+create table idioma (
+id int primary key,
+nombre varchar(255));
+
+create table habla(
+id int primary key,
+id_usuario int,
+id_idioma int,
+constraint fk10 FOREIGN KEY (id_usuario) REFERENCES usuaria(id),
+constraint fk11 FOREIGN KEY (id_idioma) REFERENCES idioma(id));
+
+//	
+	
+
+		
+
+

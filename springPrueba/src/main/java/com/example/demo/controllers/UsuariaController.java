@@ -163,4 +163,44 @@ public class UsuariaController {
 
 	}
 
+	// Controlador devuevle el usuario autenticado
+
+	@GetMapping("/quieneres")
+	public DTO getAutenticado(HttpServletRequest request) {
+		DTO dtoUsuaria = new DTO();
+		Cookie[] c = request.getCookies();
+		dtoUsuaria.put("result", "fail");
+		int idUsuarioAutenticado = -1;
+		for (Cookie co : c) {
+			if (co.getName().equals("jwt"))
+				// dtoUsuaria.put("id",
+				idUsuarioAutenticado = AutenticadorJWT.getIdUsuarioDesdeJWT(co.getValue());
+		}
+		// identificamos usuario por jwt de cabecera recibida
+
+		// int idUsuarioAutenticado =
+		// AutenticadorJWT.getIdUsuarioDesdeJwtIncrustadoEnRequest(request);
+
+		Usuaria u = usuRep.findById(idUsuarioAutenticado);
+		// dtoUsuaria.put("idfound", idUsuarioAutenticado);
+		// si existe el usuario y los datos son correctos, devolveremos un success y
+		// todos los datos del usuario
+		if (u != null) {
+			dtoUsuaria.put("result", "ok");
+			dtoUsuaria.put("nombre", u.getNombre());
+			dtoUsuaria.put("fecha_nac", u.getFechaNac().toString());
+			if (u.getFechaElim() != null)
+				dtoUsuaria.put("fecha_elim", u.getFechaElim().toString());
+			else
+				dtoUsuaria.put("fecha_elim", new Date(0));
+			if (u.getUsuarioTipo() != null) {
+				dtoUsuaria.put("rol", u.getUsuarioTipo().getRol());
+			} else {
+				dtoUsuaria.put("rol", "No tiene");
+			}
+		}
+
+		return dtoUsuaria;
+	}
+
 }

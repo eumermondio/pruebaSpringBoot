@@ -3,5 +3,7 @@
 	<persistence-unit name="springPrueba">
 		<class>com.example.demo.Usuaria</class>
 		<class>com.example.demo.UsuarioTipo</class>
+		<class>com.example.demo.Habla</class>
+		<class>com.example.demo.Idioma</class>
 	</persistence-unit>
 </persistence>
